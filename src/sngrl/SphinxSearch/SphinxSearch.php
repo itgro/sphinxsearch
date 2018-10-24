@@ -282,6 +282,11 @@ class SphinxSearch
         return $this->_connection->escapeString($string);
     }
 
+    public function __call($name, $arguments)
+    {
+        return call_user_func_array([$this->_connection, $name], $arguments);
+    }
+
     private function getResultKeyByID($id, $result)
     {
         if (count($result) > 0) {

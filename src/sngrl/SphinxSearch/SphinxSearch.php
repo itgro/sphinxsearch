@@ -1,4 +1,5 @@
-<?php 
+<?php
+
 namespace sngrl\SphinxSearch;
 
 class SphinxSearch
@@ -10,7 +11,7 @@ class SphinxSearch
     protected $_total_count;
     protected $_time;
     protected $_eager_loads;
-	protected $_raw_mysql_connection;
+    protected $_raw_mysql_connection;
 
     public function __construct()
     {
@@ -31,53 +32,46 @@ class SphinxSearch
         $this->_eager_loads = array();
     }
 
-	/**
-	 * @param $docs
-	 * @param $index_name
-	 * @param $query
-	 * @param array $extra, in this format: array('option_name' => option_value, 'limit' => 100, ...)
-	 * @return array
-	 */
-	public function getSnippetsQL($docs, $index_name, $query, $extra = [])
-	{
-		// $extra = [];
-		if (is_array($docs) === FALSE)
-		{
-			$docs = [$docs];
-		}
-		foreach ($docs as &$doc)
-		{
-			$doc = "'".mysqli_real_escape_string($this->_raw_mysql_connection, strip_tags($doc))."'";
-		}
+    /**
+     * @param $docs
+     * @param $index_name
+     * @param $query
+     * @param array $extra , in this format: array('option_name' => option_value, 'limit' => 100, ...)
+     * @return array
+     */
+    public function getSnippetsQL($docs, $index_name, $query, $extra = [])
+    {
+        // $extra = [];
+        if (is_array($docs) === false) {
+            $docs = [$docs];
+        }
+        foreach ($docs as &$doc) {
+            $doc = "'" . mysqli_real_escape_string($this->_raw_mysql_connection, strip_tags($doc)) . "'";
+        }
 
-		$extra_ql = '';
-		if ($extra)
-		{
-			foreach ($extra as $key => $value)
-			{
-				$extra_ql[] = $value.' AS '.$key;
-			}
-			$extra_ql = implode(',', $extra_ql);
-			if ($extra_ql)
-			{
-				$extra_ql = ','.$extra_ql;
-			}
-		}
+        $extra_ql = '';
+        if ($extra) {
+            foreach ($extra as $key => $value) {
+                $extra_ql[] = $value . ' AS ' . $key;
+            }
+            $extra_ql = implode(',', $extra_ql);
+            if ($extra_ql) {
+                $extra_ql = ',' . $extra_ql;
+            }
+        }
 
-		$query = "CALL SNIPPETS((".implode(',',$docs)."),'".$index_name."','".mysqli_real_escape_string($this->_raw_mysql_connection, $query)."' ".$extra_ql.")";
-		// die($query);
-		$result = mysqli_query($this->_raw_mysql_connection, $query);
-		// ddd($result);
-		$reply = array();
-		if ($result)
-		{
-			while ($row = mysqli_fetch_array($result, MYSQLI_ASSOC))
-			{
-				$reply[] = $row['snippet'];
-			}
-		}
-		return $reply;
-	}
+        $query = "CALL SNIPPETS((" . implode(',', $docs) . "),'" . $index_name . "','" . mysqli_real_escape_string($this->_raw_mysql_connection, $query) . "' " . $extra_ql . ")";
+        // die($query);
+        $result = mysqli_query($this->_raw_mysql_connection, $query);
+        // ddd($result);
+        $reply = array();
+        if ($result) {
+            while ($row = mysqli_fetch_array($result, MYSQLI_ASSOC)) {
+                $reply[] = $row['snippet'];
+            }
+        }
+        return $reply;
+    }
 
     public function search($string, $index_name = null)
     {
@@ -208,14 +202,14 @@ class SphinxSearch
                 $config = isset($this->_config['mapping']) ? $this->_config['mapping']
                     : $this->_config[$this->_index_name];
 
-		// Get the model primary key column name    
-		$primaryKey = isset($config['primaryKey']) ? $config['primaryKey'] : 'id';
-		    
+                // Get the model primary key column name
+                $primaryKey = isset($config['primaryKey']) ? $config['primaryKey'] : 'id';
+
                 if ($config) {
                     if (isset($config['repository'])) {
                         $result = call_user_func_array($config['repository'] . '::findInRange',
                             array($config['column'], $matchids));
-                    } else if (isset($config['modelname'])) {
+                    } elseif (isset($config['modelname'])) {
                         if ($this->_eager_loads) {
                             $result = call_user_func_array($config['modelname'] . "::whereIn",
                                 array($config['column'], $matchids))->orderByRaw(\DB::raw("FIELD($primaryKey, $idString)"))
@@ -283,6 +277,11 @@ class SphinxSearch
         return $this->_connection->getLastError();
     }
 
+    public function escapeStringQL($string)
+    {
+        return $this->_connection->escapeString($string);
+    }
+
     private function getResultKeyByID($id, $result)
     {
         if (count($result) > 0) {
@@ -293,11 +292,6 @@ class SphinxSearch
             }
         }
         return false;
-    }
-
-    public function escapeStringQL($string)
-    {
-        return $this->_connection->escapeString($string);
     }
 
 }

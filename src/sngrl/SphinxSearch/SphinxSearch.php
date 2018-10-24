@@ -2,6 +2,9 @@
 
 namespace sngrl\SphinxSearch;
 
+/**
+ * @mixin \Sphinx\SphinxClient
+ */
 class SphinxSearch
 {
     protected $_connection;
